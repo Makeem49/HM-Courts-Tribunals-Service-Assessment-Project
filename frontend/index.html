@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1d3b53">
+  <title>Casework Tasks | HMCTS</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <script src="/static/js/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Casework Tasks home"><span class="brand-mark">C</span><span><strong>Casework</strong><small>HMCTS · TASK MANAGER</small></span></a>
+    <div class="topbar-right"><span class="secure-dot"></span><span>Workspace</span><span class="avatar" aria-label="Caseworker profile">CW</span></div>
+  </header>
+  <main class="shell">
+    <section class="welcome-row">
+      <div><p class="eyebrow">CASEWORK OPERATIONS</p><h1>Your tasks, in focus.</h1><p class="subheading">Keep track of deadlines and move each case forward.</p></div>
+      <button class="button button-primary" id="open-create"><span aria-hidden="true">＋</span> New task</button>
+    </section>
+    <section class="summary-grid" aria-label="Task summary">
+      <article class="summary-card"><div class="summary-label">All tasks <span class="summary-icon">▤</span></div><strong id="count-all">—</strong><small>Across your workload</small></article>
+      <article class="summary-card"><div class="summary-label">Pending <span class="summary-icon icon-amber">◷</span></div><strong id="count-pending">—</strong><small>Ready to be picked up</small></article>
+      <article class="summary-card"><div class="summary-label">In progress <span class="summary-icon icon-blue">↗</span></div><strong id="count-progress">—</strong><small>Currently being worked on</small></article>
+      <article class="summary-card"><div class="summary-label">Completed <span class="summary-icon icon-green">✓</span></div><strong id="count-completed">—</strong><small>Tasks finished</small></article>
+    </section>
+    <section class="task-panel">
+      <div class="panel-heading"><div><h2>Task register</h2><p>Review, prioritise and update your work.</p></div><button class="button button-quiet" id="refresh-tasks" aria-label="Refresh tasks">↻ <span>Refresh</span></button></div>
+      <div class="toolbar"><label class="search-box"><span aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Search tasks…" aria-label="Search tasks"></label><label class="filter-wrap"><span>STATUS</span><select id="status-filter" aria-label="Filter by status"><option value="all">All statuses</option><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option></select></label></div>
+      <div id="feedback" class="feedback" role="status" aria-live="polite" hidden></div>
+      <div class="table-wrap"><table><thead><tr><th>TASK</th><th>STATUS</th><th>DUE DATE</th><th class="actions-heading">ACTIONS</th></tr></thead><tbody id="task-rows"><tr><td colspan="4" class="loading-cell">Loading tasks…</td></tr></tbody></table></div>
+      <div class="panel-footer"><span id="result-count">Loading tasks</span><span>Sorted by due date</span></div>
+    </section>
+    <p class="privacy-note"><span>◆</span> Keep task descriptions free of unnecessary sensitive personal information.</p>
+  </main>
+  <dialog id="task-dialog" class="task-dialog">
+    <form id="task-form" novalidate>
+      <div class="dialog-heading"><div><p class="eyebrow" id="dialog-eyebrow">CREATE TASK</p><h2 id="dialog-title">Add a task</h2></div><button type="button" class="icon-button" id="close-dialog" aria-label="Close dialog">×</button></div>
+      <label class="field-label" for="task-title">Task title <span class="required">*</span></label><input id="task-title" name="title" maxlength="160" required placeholder="e.g. Review case documents"><p class="field-error" id="title-error"></p>
+      <label class="field-label" for="task-description">Description <span class="optional">OPTIONAL</span></label><textarea id="task-description" name="description" rows="3" maxlength="5000" placeholder="Add any helpful context…"></textarea>
+      <div class="form-row"><div><label class="field-label" for="task-status">Status</label><select id="task-status" name="status"><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option></select></div><div><label class="field-label" for="task-due">Due date and time <span class="required">*</span></label><input id="task-due" name="due_at" type="datetime-local" required><p class="field-error" id="due-error"></p></div></div>
+      <p class="form-error" id="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="button button-secondary" id="cancel-dialog">Cancel</button><button type="submit" class="button button-primary" id="save-task">Save task</button></div>
+    </form>
+  </dialog>
+  <dialog id="delete-dialog" class="confirm-dialog"><div class="confirm-icon">!</div><h2>Delete this task?</h2><p>This action cannot be undone. The task will be permanently removed from your register.</p><div class="dialog-actions"><button class="button button-secondary" id="cancel-delete">Keep task</button><button class="button button-danger" id="confirm-delete">Delete task</button></div></dialog>
+  <footer class="site-footer"><span>Casework Tasks</span><span>Designed for clear, focused casework</span></footer>
+</body>
+</html>

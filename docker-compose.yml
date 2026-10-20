@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    image: hmcts-task-manager
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-development-only-change-me}
+    volumes:
+      - task-data:/data
+    restart: unless-stopped
+
+volumes:
+  task-data:
