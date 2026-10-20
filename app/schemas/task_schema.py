@@ -2,10 +2,12 @@
 
 from datetime import datetime, timezone
 
-from marshmallow import Schema, ValidationError, fields, validate, validates_schema
+from marshmallow import EXCLUDE, Schema, ValidationError, fields, pre_load, validate, validates_schema
 
 
 STATUSES = ("pending", "in_progress", "completed")
+DEFAULT_PAGE_SIZE = 10
+MAX_PAGE_SIZE = 100
 
 
 def parse_due_at(value):
@@ -76,6 +78,26 @@ class TaskUpdateSchema(Schema):
             if due_at.tzinfo is None or due_at.utcoffset() is None:
                 raise ValidationError({"due_at": ["Include a timezone, e.g. Z or +01:00."]})
             data["due_at"] = due_at.astimezone(timezone.utc)
+
+
+class TaskListQuerySchema(Schema):
+    """Validate pagination, filter and search query parameters."""
+
+    class Meta:
+        unknown = EXCLUDE
+
+    page = fields.Integer(load_default=1, validate=validate.Range(min=1))
+    page_size = fields.Integer(
+        load_default=DEFAULT_PAGE_SIZE,
+        validate=validate.Range(min=1, max=MAX_PAGE_SIZE),
+    )
+    status = fields.String(validate=validate.OneOf(STATUSES))
+    search = fields.String(validate=validate.Length(max=200))
+
+    @pre_load
+    def drop_blank_values(self, data, **kwargs):
+        """Treat empty query parameters such as ``?status=`` as not supplied."""
+        return {key: value.strip() for key, value in data.items() if value.strip()}
 
 
 class TaskResponseSchema(Schema):

@@ -7,7 +7,7 @@ A small full-stack task-management application built with Flask, Marshmallow, SQ
 - Create, list, retrieve, edit and delete tasks.
 - Change task status independently: `pending`, `in_progress` or `completed`.
 - Optional description and required due date/time.
-- Search and status filtering, summary counts, overdue indicators and responsive layout.
+- Server-side pagination, search and status filtering, summary counts, overdue indicators and responsive layout.
 - Marshmallow request validation and consistent JSON error responses.
 - SQLite persistence, repository/service separation and API tests.
 
@@ -54,7 +54,7 @@ Configuration is read from the docker compose environment or a `.env`
 pytest -q
 ```
 
-The tests use an isolated in-memory SQLite database. They cover creation, listing/filtering, retrieval, status updates, general updates, deletion, invalid input, missing records and empty updates.
+The tests use an isolated in-memory SQLite database. They cover creation, listing/filtering, pagination, search, summary counts, retrieval, status updates, general updates, deletion, invalid input, missing records and empty updates.
 
 ## Architecture
 
@@ -85,14 +85,45 @@ Base URL: `/api/tasks`. JSON request and response bodies use UTF-8. Dates must b
 
 | Method | Endpoint | Description | Success |
 |---|---|---|---|
-| `GET` | `/api/tasks` | List all tasks, sorted by due date | `200` |
-| `GET` | `/api/tasks?status=pending` | Filter tasks by status | `200` |
+| `GET` | `/api/tasks` | List tasks one page at a time, sorted by due date | `200` |
+| `GET` | `/api/tasks?status=pending&search=bundle&page=2` | Filter, search and page through tasks | `200` |
+| `GET` | `/api/tasks/summary` | Count tasks by status | `200` |
 | `POST` | `/api/tasks` | Create a task | `201` |
 | `GET` | `/api/tasks/{id}` | Retrieve a task | `200` |
 | `PATCH` | `/api/tasks/{id}` | Partially update task fields | `200` |
 | `PATCH` | `/api/tasks/{id}/status` | Update only the status | `200` |
 | `DELETE` | `/api/tasks/{id}` | Delete a task | `204` |
 | `GET` | `/api/health` | Health check | `200` |
+
+### Listing, pagination and search
+
+`GET /api/tasks` accepts these optional query parameters. Blank values are ignored; invalid values return `400`.
+
+| Parameter | Default | Description |
+|---|---|---|
+| `page` | `1` | 1-based page number. A page past the end returns an empty `items` list. |
+| `page_size` | `10` | Tasks per page, from 1 to 100. |
+| `status` | — | One of `pending`, `in_progress` or `completed`. |
+| `search` | — | Case-insensitive match on title or description (max 200 characters). |
+
+```json
+{
+  "items": [{"id": 11, "title": "Review case documents", "...": "..."}],
+  "count": 1,
+  "total": 11,
+  "page": 2,
+  "page_size": 10,
+  "pages": 2
+}
+```
+
+`count` is the number of items on this page; `total` is the number of tasks matching the filters across all pages.
+
+`GET /api/tasks/summary` returns workload totals that are unaffected by paging or filters:
+
+```json
+{"total": 11, "pending": 6, "in_progress": 3, "completed": 2}
+```
 
 ### Create task example
 
@@ -107,7 +138,7 @@ Base URL: `/api/tasks`. JSON request and response bodies use UTF-8. Dates must b
 }
 ```
 
-`description` is optional and may be `null`; `status` defaults to `pending`. The title must contain 1–160 non-whitespace characters. Descriptions are limited to 5,000 characters.
+`description` is optional and may be `null`; `status` defaults to `pending`. The title must contain 1–160 non-whitespace characters and must be unique: titles are compared case-insensitively after trimming whitespace, so `Review case documents` and ` review CASE documents ` count as the same title. Descriptions are limited to 5,000 characters.
 
 ### Update status example
 
@@ -128,5 +159,11 @@ Validation failures return `400`:
 }
 ```
 
-A missing task returns `404` with `error` and `message`. Unexpected server errors return a generic `500` response; details are written to the application log rather than exposed to the client.
+A missing task returns `404` with `error` and `message`. Creating a task, or renaming one, with a title that another task already uses returns `409`:
+
+```json
+{"error": "Conflict", "message": "A task with this title already exists."}
+```
+
+Unexpected server errors return a generic `500` response; details are written to the application log rather than exposed to the client.
 

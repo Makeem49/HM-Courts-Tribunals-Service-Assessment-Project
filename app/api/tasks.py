@@ -4,8 +4,8 @@ from flask import Blueprint, jsonify, request
 from marshmallow import ValidationError
 
 from app.schemas.task_schema import (
-    STATUSES,
     TaskCreateSchema,
+    TaskListQuerySchema,
     TaskResponseSchema,
     TaskStatusSchema,
     TaskUpdateSchema,
@@ -18,6 +18,7 @@ service = TaskService()
 create_schema = TaskCreateSchema()
 status_schema = TaskStatusSchema()
 update_schema = TaskUpdateSchema()
+list_query_schema = TaskListQuerySchema()
 response_schema = TaskResponseSchema()
 
 
@@ -27,11 +28,24 @@ def validation_error(error):
 
 @tasks_bp.get("")
 def list_tasks():
-    status = request.args.get("status")
-    if status and status not in STATUSES:
-        return jsonify({"error": "Validation failed", "details": {"status": ["Unsupported status."]}}), 400
-    tasks = service.list_tasks(status=status)
-    return jsonify({"items": response_schema.dump(tasks, many=True), "count": len(tasks)})
+    try:
+        params = list_query_schema.load(request.args)
+    except ValidationError as error:
+        return validation_error(error)
+    result = service.list_tasks(**params)
+    return jsonify({
+        "items": response_schema.dump(result.items, many=True),
+        "count": len(result.items),
+        "total": result.total,
+        "page": result.page,
+        "page_size": result.per_page,
+        "pages": result.pages,
+    })
+
+
+@tasks_bp.get("/summary")
+def task_summary():
+    return jsonify(service.summarise_tasks())
 
 
 @tasks_bp.post("")

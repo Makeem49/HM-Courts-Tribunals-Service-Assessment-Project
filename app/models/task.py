@@ -48,5 +48,10 @@ class Task(db.Model):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
+    # Titles are unique regardless of case, so "Review" and "review" cannot coexist.
+    __table_args__ = (
+        db.Index("uq_tasks_title_lower", db.func.lower(title), unique=True),
+    )
+
     def __repr__(self):
         return f"<Task id={self.id} title={self.title!r}>"
