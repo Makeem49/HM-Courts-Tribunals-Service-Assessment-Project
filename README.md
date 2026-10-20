@@ -42,7 +42,7 @@ Open <http://localhost:8000>. The container runs the app under Gunicorn as a non
 | `docker compose down` | Stop the app (data is kept) |
 | `docker compose down -v` | Stop the app and delete the database volume |
 
-Configuration is read from the environment or a `.env` file next to `docker-compose.yml`:
+Configuration is read from the docker compose environment or a `.env` 
 
 - `SECRET_KEY`: set this to a long random value outside local development.
 - `APP_PORT`: the host port (default `8000`). Port 5000 is avoided because macOS uses it for AirPlay Receiver.
@@ -130,14 +130,3 @@ Validation failures return `400`:
 
 A missing task returns `404` with `error` and `message`. Unexpected server errors return a generic `500` response; details are written to the application log rather than exposed to the client.
 
-## Engineering notes
-
-- PEP 8-style Python naming and formatting are used throughout.
-- The application factory makes configuration and isolated tests easier.
-- The repository pattern separates persistence from business logic.
-- The frontend uses DOM text nodes / `textContent` for user-provided strings rather than injecting task data as HTML.
-- This is a technical-test starter, not a production-ready HMCTS service. Before production use, add authentication/authorisation, CSRF strategy if cookie-based authentication is introduced, audit logging, database migrations, rate limiting, accessibility review, operational monitoring and deployment configuration. Avoid storing sensitive case or personal data in task descriptions.
-
-## Licence
-
-For assessment and demonstration use; confirm any required licence before redistribution.
